@@ -53,7 +53,7 @@ export function Chatbot({ user }: ChatbotProps) {
 
     try {
       const response = await fetch(
-        'https://ayushtest.app.n8n.cloud/webhook-test/ebe9fafa-7180-4b0e-ae64-56c6bca98fbc',
+        'https://ayushtest.app.n8n.cloud/webhook/ebe9fafa-7180-4b0e-ae64-56c6bca98fbc',
         {
           method: 'POST',
           headers: {
