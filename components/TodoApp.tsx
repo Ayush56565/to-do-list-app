@@ -1,4 +1,4 @@
-'use client'
+    'use client'
 
 import { useState, useEffect } from 'react'
 import { supabase, type Todo } from '@/lib/supabase'
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Edit2, Trash2, LogOut, User } from 'lucide-react'
+import { Chatbot } from '@/components/Chatbot'
 
 interface TodoAppProps {
   user: any
@@ -21,6 +22,34 @@ export function TodoApp({ user, onSignOut }: TodoAppProps) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    const ensureProfile = async () => {
+      try {
+        // Check if profile exists
+        const { data: existingProfile, error: fetchError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (fetchError && fetchError.code === 'PGRST116') {
+          // Profile doesn't exist, create it
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: user.id,
+                email: user.email!,
+                name: user.user_metadata?.name || null,
+              }
+            ])
+
+          if (insertError) throw insertError
+        }
+      } catch (error) {
+        console.error('Error ensuring profile:', error)
+      }
+    }
+
     fetchTodos()
     ensureProfile()
   }, [])
@@ -312,20 +341,10 @@ export function TodoApp({ user, onSignOut }: TodoAppProps) {
             </CardContent>
           </Card>
         )}
-
-        {/* Empty State */}
-        {todos.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <div className="text-gray-400 mb-4">
-                <Plus className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
-              <p className="text-gray-600">Add your first task to get started!</p>
-            </CardContent>
-          </Card>
-        )}
       </div>
+      
+      {/* Chatbot */}
+      <Chatbot user={user}/>
     </div>
   )
 }
