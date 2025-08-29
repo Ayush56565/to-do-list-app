@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,21 +14,28 @@ interface Message {
 }
 
 interface ChatbotProps {
-  user:any
+  user: any
 }
 
-export function Chatbot({user}:ChatbotProps) {
+export function Chatbot({ user }: ChatbotProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Hello! I\'m here to help you with adding new tasks. What task do you want to add today?',
+      text: "Hello! I'm here to help you with adding new tasks. What task do you want to add today?",
       isUser: false,
-      timestamp: new Date()
-    }
+      timestamp: new Date(),
+    },
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  // ref for auto-scroll
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isLoading])
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return
@@ -37,55 +44,61 @@ export function Chatbot({user}:ChatbotProps) {
       id: Date.now().toString(),
       text: inputMessage.trim(),
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
 
-    setMessages(prev => [...prev, userMessage])
+    setMessages((prev) => [...prev, userMessage])
     setInputMessage('')
     setIsLoading(true)
 
     try {
-      const response = await fetch('https://ayushtest.app.n8n.cloud/webhook-test/ebe9fafa-7180-4b0e-ae64-56c6bca98fbc', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage.text,
-          timestamp: userMessage.timestamp.toISOString(),
-          userId: user.id
-        })
-      })
+      const response = await fetch(
+        'https://ayushtest.app.n8n.cloud/webhook-test/ebe9fafa-7180-4b0e-ae64-56c6bca98fbc',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: userMessage.text,
+            timestamp: userMessage.timestamp.toISOString(),
+            userId: user.id,
+          }),
+        }
+      )
 
       let botResponse = 'Thanks for your message! I received it successfully.'
-      
+
       if (response.ok) {
         try {
           const data = await response.json()
           if (data.response || data.message) {
-            botResponse = "The task has been added successfully."
+            botResponse =
+              'The task has been added successfully.'
+            setTimeout(() => {
+              window.location.reload()
+            }, 4000)
           }
-        } catch {
-        }
+        } catch {}
       }
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: botResponse,
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
       }
 
-      setMessages(prev => [...prev, botMessage])
+      setMessages((prev) => [...prev, botMessage])
     } catch (error) {
       console.error('Error sending message:', error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Sorry, I\'m having trouble connecting right now. Please try again later.',
+        text: "Sorry, I'm having trouble connecting right now. Please try again later.",
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
       }
-      setMessages(prev => [...prev, errorMessage])
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
@@ -132,14 +145,16 @@ export function Chatbot({user}:ChatbotProps) {
                 </Button>
               </div>
             </CardHeader>
-            
+
             <CardContent className="flex-1 flex flex-col p-0">
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${
+                      message.isUser ? 'justify-end' : 'justify-start'
+                    }`}
                   >
                     <div
                       className={`max-w-[80%] p-3 rounded-lg ${
@@ -149,14 +164,16 @@ export function Chatbot({user}:ChatbotProps) {
                       }`}
                     >
                       <div className="flex items-start space-x-2">
-                        {!message.isUser && <Bot className="w-4 h-4 mt-0.5 text-blue-600" />}
+                        {!message.isUser && (
+                          <Bot className="w-4 h-4 mt-0.5 text-blue-600" />
+                        )}
                         {message.isUser && <User className="w-4 h-4 mt-0.5" />}
                         <p className="text-sm leading-relaxed">{message.text}</p>
                       </div>
                     </div>
                   </div>
                 ))}
-                
+
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="bg-gray-100 p-3 rounded-lg rounded-bl-sm">
@@ -164,13 +181,20 @@ export function Chatbot({user}:ChatbotProps) {
                         <Bot className="w-4 h-4 text-blue-600" />
                         <div className="flex space-x-1">
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: '0.1s' }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: '0.2s' }}
+                          ></div>
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Input */}
